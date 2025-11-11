@@ -35,6 +35,28 @@ class TravelCompanyScraper:
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         })
     
+    def _extract_city_from_address(self, address: str) -> str:
+        """
+        Extract city/province from address field as fallback
+        Addresses typically end with province/city names
+        """
+        if not address:
+            return ""
+        
+        # Common province/city patterns in Vietnamese addresses
+        city_patterns = [
+            r'(?:Thành phố|TP\.?)\s+(Hà Nội|Hải Phòng|Đà Nẵng|Hồ Chí Minh|Cần Thơ|Huế)',
+            r'(?:Tỉnh|T\.?)\s+([A-ZĐÁÀẢÃẠĂẮẰẲẴẶÂẤẦẨẪẬÉÈẺẼẸÊẾỀỂỄỆÍÌỈĨỊÓÒỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢÚÙỦŨỤƯỨỪỬỮỰÝỲỶỸỴ][a-zđáàảãạăắằẳẵặâấầẩẫậéèẻẽẹêếềểễệíìỉĩịóòỏõọôốồổỗộơớờởỡợúùủũụưứừửữựýỳỷỹỵ\s]+)',
+            r'(Thành phố Hà Nội|Thành phố Hải Phòng|Thành phố Đà Nẵng|Thành phố Hồ Chí Minh|Thành phố Cần Thơ|Thành phố Huế)',
+        ]
+        
+        for pattern in city_patterns:
+            match = re.search(pattern, address, re.IGNORECASE)
+            if match:
+                return match.group(0).strip()
+        
+        return ""
+    
     def scrape_page(self, page_num: int = 1) -> List[Dict[str, str]]:
         """
         Scrape a single page of company data
@@ -58,6 +80,18 @@ class TravelCompanyScraper:
             response.encoding = 'utf-8'
             
             soup = BeautifulSoup(response.text, 'html.parser')
+            
+            # Extract city/province information from the header (if available)
+            city_province = ""
+            city_element = soup.find('div', class_='piece')
+            if city_element:
+                city_text = city_element.get_text(strip=True)
+                # Remove the count number (e.g., "Thành phố Hà Nội: 1929" -> "Thành phố Hà Nội")
+                # Handle cases where city name might be missing (continuation pages)
+                city_match = re.match(r'(.+?):\s*\d+$', city_text)
+                if city_match:
+                    city_province = city_match.group(1).strip()
+                    logger.debug(f"City/Province from header: {city_province}")
             
             # Find all company name blocks
             name_blocks = soup.find_all('div', class_='company-name')
@@ -88,6 +122,7 @@ class TravelCompanyScraper:
                     company_data = {
                         'vietnamese_name': vn_name,
                         'english_name': en_name,
+                        'city_province': city_province,
                         'address': '',
                         'license_number': '',
                         'issue_date': '',
@@ -130,6 +165,13 @@ class TravelCompanyScraper:
                                 company_data['website'] = 'https://' + website
                             else:
                                 company_data['website'] = 'https://' + website
+                    
+                    # If city_province is empty from header, try to extract from address
+                    if not company_data['city_province'] and company_data['address']:
+                        extracted_city = self._extract_city_from_address(company_data['address'])
+                        if extracted_city:
+                            company_data['city_province'] = extracted_city
+                            logger.debug(f"Extracted city from address: {extracted_city}")
                     
                     # Only add if we have at least a company name
                     if company_data['vietnamese_name'] or company_data['english_name']:
@@ -223,7 +265,7 @@ class TravelCompanyScraper:
             return
         
         fieldnames = [
-            'vietnamese_name', 'english_name', 'address', 
+            'vietnamese_name', 'english_name', 'city_province', 'address', 
             'license_number', 'issue_date', 'phone', 'website', 
             'email', 'business_scope', 'source_page'
         ]

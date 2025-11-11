@@ -79,6 +79,7 @@ Each company record includes:
 |-------|-------------|
 | `vietnamese_name` | Company name in Vietnamese |
 | `english_name` | Company name in English |
+| `city_province` | City/Province location (extracted from page header or address) |
 | `address` | Business address |
 | `license_number` | Tourism business license number |
 | `issue_date` | License issue date |
@@ -92,11 +93,13 @@ Each company record includes:
 
 ✅ Scrapes all international travel company data  
 ✅ Multi-page support with pagination (478 pages)  
+✅ Extracts city/province information  
 ✅ Export to CSV or JSON format  
 ✅ Configurable rate limiting (respectful scraping)  
 ✅ Comprehensive error handling  
 ✅ Progress logging  
 ✅ UTF-8 encoding support for Vietnamese text  
+✅ Automatic fallback extraction from address when header city is missing  
 
 ## Rate Limiting
 
@@ -126,8 +129,8 @@ python main.py --delay 1.5 --start-page 1 --end-page 100 --output companies.csv
 
 ### CSV Example
 ```csv
-vietnamese_name,english_name,address,license_number,issue_date,phone,website,email,business_scope,source_page
-CÔNG TY TNHH THƯƠNG MẠI VÀ DU LỊCH QUỐC TẾ TRUST TRAVEL,TRUST TRAVEL INTERNATIONAL TRADE AND TRAVEL COMPANY LIMITED,"SỐ 19, NGÁCH 20/82/2 ĐƯỜNG PHÚ MINH",01-3012/2025/CDLQGVN-GP LHQT,12/11/2025,0342540868,https://trusttravel.vn/,contact@trusttravel.vn,"Inbound, Nội địa",https://quanlyluhanh.vn/index.php/cat/1001
+vietnamese_name,english_name,city_province,address,license_number,issue_date,phone,website,email,business_scope,source_page
+CÔNG TY TNHH THƯƠNG MẠI VÀ DU LỊCH QUỐC TẾ TRUST TRAVEL,TRUST TRAVEL INTERNATIONAL TRADE AND TRAVEL COMPANY LIMITED,Thành phố Hà Nội,"SỐ 19, NGÁCH 20/82/2 ĐƯỜNG PHÚ MINH",01-3012/2025/CDLQGVN-GP LHQT,12/11/2025,0342540868,https://trusttravel.vn/,contact@trusttravel.vn,"Inbound, Nội địa",https://quanlyluhanh.vn/index.php/cat/1001
 ```
 
 ### JSON Example
@@ -136,6 +139,7 @@ CÔNG TY TNHH THƯƠNG MẠI VÀ DU LỊCH QUỐC TẾ TRUST TRAVEL,TRUST TRAVEL
   {
     "vietnamese_name": "CÔNG TY TNHH THƯƠNG MẠI VÀ DU LỊCH QUỐC TẾ TRUST TRAVEL",
     "english_name": "TRUST TRAVEL INTERNATIONAL TRADE AND TRAVEL COMPANY LIMITED",
+    "city_province": "Thành phố Hà Nội",
     "address": "SỐ 19, NGÁCH 20/82/2 ĐƯỜNG PHÚ MINH",
     "license_number": "01-3012/2025/CDLQGVN-GP LHQT",
     "issue_date": "12/11/2025",
